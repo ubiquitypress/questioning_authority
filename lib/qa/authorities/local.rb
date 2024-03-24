@@ -9,25 +9,34 @@ module Qa::Authorities
 
     class << self
       attr_reader :config
+      attr_reader :search_paths
 
       def load_config(file)
         @config = YAML.load_file(file)
       end
 
+      def add_search_path(path)
+        raise Qa::ConfigDirectoryNotFound, "Unable to add #{path} as a subauthority path. You must create it in order to use local authorities" unless Dir.exist? path
+        
+        @search_paths ||= []
+        @search_paths << path if Dir.exist?(path)
+      end
+
       # Path to sub-authority files is either the full path to a directory or
       # the path to a directory relative to the Rails application
-      def subauthorities_path
+      def subauthorities_paths
         if config[:local_path].starts_with?(File::Separator)
-          config[:local_path]
+          add_search_path(config[:local_path])
         else
-          Rails.root.join(config[:local_path]).to_s # TODO: Rails.root.join returns class Pathname, which may be ok.  Added to_s because of failing regression test.
+          add_search_path(Rails.root.join(config[:local_path]).to_s) # TODO: Rails.root.join returns class Pathname, which may be ok.  Added to_s because of failing regression test.
         end
       end
 
       # Local sub-authorities are any YAML files in the subauthorities_path
       def names
-        raise Qa::ConfigDirectoryNotFound, "There's no directory at #{subauthorities_path}. You must create it in order to use local authorities" unless Dir.exist? subauthorities_path
-        Dir.entries(subauthorities_path).map { |f| File.basename(f, ".yml") if f =~ /yml$/ }.compact
+        subauthorities_paths.map do |subauthorities_path|
+          Dir.entries(subauthorities_path).map { |f| File.basename(f, ".yml") if f =~ /yml$/ }.compact
+        end.compact
       end
 
       def subauthority_for(subauthority)
