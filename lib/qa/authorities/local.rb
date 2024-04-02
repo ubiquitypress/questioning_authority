@@ -17,7 +17,7 @@ module Qa::Authorities
 
       def add_search_path(path)
         raise Qa::ConfigDirectoryNotFound, "Unable to add #{path} as a subauthority path. You must create it in order to use local authorities" unless Dir.exist? path
-        
+
         @search_paths ||= []
         @search_paths << path if Dir.exist?(path)
       end
@@ -36,7 +36,7 @@ module Qa::Authorities
       def names
         subauthorities_paths.map do |subauthorities_path|
           Dir.entries(subauthorities_path).map { |f| File.basename(f, ".yml") if f =~ /yml$/ }.compact
-        end.compact
+        end.flatten
       end
 
       def subauthority_for(subauthority)
