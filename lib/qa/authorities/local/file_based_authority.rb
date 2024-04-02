@@ -33,7 +33,8 @@ module Qa::Authorities
       end
 
       def subauthority_filename
-        File.join(Local.subauthorities_path, "#{subauthority}.yml")
+        path = Local.subauthorities_paths.find { |p| File.exist?(File.join(p, "#{subauthority}.yml"))}
+        File.join(path, "#{subauthority}.yml")
       end
 
       def normalize_terms(terms)
